@@ -26,214 +26,173 @@ class CalculatorPage extends StatefulWidget {
 
 
 class _CalculatorPageState extends State<CalculatorPage> {
-  final TextEditingController _num2Controller = TextEditingController();
-  final TextEditingController _num1Controller = TextEditingController();
-  final List<String> buttons = [
-    '7', '8', '9', '/',
-    '4', '5', '6', '*',
-    '1', '2', '3', '-',
-    '0', '.', '=', '+',
-  ];
-  String _operation = '+';
-  String _result = '';
-  bool editingFirst = true;
+  String display = '0';
+
+  double? firstNumber;
+  String? operation;
+
+  bool shouldClearDisplay = false;
 
 
-  Widget buildNumberButton(String value) {
-    return SizedBox(
-      width: 60,
-      height: 60,
-      child: ElevatedButton(
-        onPressed: () {
-          setState(() {
-            if (editingFirst) {
-              _num1Controller.text += value;
-            } else {
-              _num2Controller.text += value;
-            }
-          });
-        },
-        child: Text(value, style: TextStyle(fontSize: 22)),
+  Widget buildButtons() {
+    final buttons = [
+      'AC', '±', '%', '/',
+      '7', '8', '9', 'x',
+      '4', '5', '6', '-',
+      '1', '2', '3', '+',
+      '0', '.', '=',
+    ];
+
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: buttons.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
       ),
+      itemBuilder: (context, index) {
+        final label = buttons[index];
+
+
+        if (label == '0') return buildWideButton(label);
+        return buildButton(label);
+      },
     );
   }
 
 
-  Widget buildOperationButton(String op) {
-    return SizedBox(
-      width: 60,
-      height: 60,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _operation == op ? Colors.orange : Colors.grey.shade700,
+  Widget buildButton(String text) {
+    Color bg = Colors.grey.shade800;
+    Color fg = Colors.white;
+
+    if ('/x-+'.contains(text)) bg = Colors.orange;
+    if ('AC±%'.contains(text)) {
+      bg = Colors.grey.shade400;
+      fg = Colors.black;
+    }
+
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: bg,
+        shape: const CircleBorder(),
+        padding: const EdgeInsets.all(20),
+      ),
+      onPressed: () => onButtonPressed(text),
+      child: Text(text, style: TextStyle(fontSize: 24, color: fg)),
+    );
+  }
+
+
+  Widget buildWideButton(String text) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.grey.shade800,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal:28),
+      ),
+      onPressed: () => onButtonPressed(text),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(text,
+          style: const TextStyle(fontSize: 24, color: Colors.white)
         ),
-        onPressed: () {
-          setState(() {
-            _operation = op;
-            editingFirst = false;
-          });
-        },
-        child: Text(op, style: TextStyle(fontSize: 22, color: Colors.white)),
       ),
     );
   }
 
 
-  Widget buildEqualsButton(String _) {
-    return SizedBox(
-      width: 60,
-      height: 60,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
-        ),
-        onPressed: calculate,
-        child: const Text('=', style: TextStyle(fontSize: 22, color: Colors.white)),
-      ),
-    );
-  }
-
-
-  void calculate() {
-    final String n1 = _num1Controller.text;
-    final String n2 = _num2Controller.text;
-
-    if (n1.isEmpty || n2.isEmpty) {
-      setState(() {
-        _result = "Please enter both values.";
-      });
-      return;
-    }
-
-
-    final double a = double.tryParse(n1) ?? double.nan;
-    final double b = double.tryParse(n2) ?? double.nan;
-
-
-    if (a.isNaN || b.isNaN) {
-      setState(() {
-        _result = "Invalid number format.";
-      });
-      return;
-    }
-
-
-    double res;
-
-    switch (_operation) {
-      case '+':
-        res = a + b;
-        break;
-      case '-':
-        res = a - b;
-        break;
-      case '*':
-        res = a * b;
-        break;
-      case '/':
-        if (b == 0) {
-          setState(() {
-            _result = "Cannot divide by zero!";
-          });
-          return;
-        }
-        res = a / b;
-        break;
-      default:
-        res = double.nan;
-    }
-
-
+  void onButtonPressed(String value) {
     setState(() {
-      _result = "Result: $res";
+      // AC
+      if (value == 'AC') {
+        display = '0';
+        firstNumber = null;
+        operation = null;
+        return;
+      }
+
+      // operation
+      if ('/x-+'.contains(value)) {
+        firstNumber = double.parse(display);
+        operation = value;
+        shouldClearDisplay = true;
+        return;
+      }
+
+      // equal
+      if (value == '=') {
+        if (firstNumber == null || operation == null) return;
+
+        final second = double.parse(display);
+        double result;
+
+        switch (operation) {
+          case '+':
+            result = firstNumber! + second;
+            break;
+          case '-':
+            result = firstNumber! - second;
+            break;
+          case '*':
+            result = firstNumber! * second;
+            break;
+          case '/':
+            result = second == 0 ? 0 :firstNumber! / second;
+            break;
+          default:
+            return;
+        }
+
+        display = result.toString();
+        firstNumber = null;
+        operation = null;
+        return;
+      }
+
+      // digits and dot
+      if (shouldClearDisplay) {
+        display = value;
+        shouldClearDisplay = false;
+      } else {
+        display = display == '0' ? value : display + value;
+      }
     });
-  }
+
+    
+
+
+    
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Calculator"),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.black,
+      body: SafeArea(
         child: Column(
           children: [
-            TextField(
-              readOnly: true,
-              controller: _num1Controller,
-              decoration: InputDecoration(
-                labelText: "First number",
-                filled: editingFirst,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(),
-              ),
-              onTap: () => setState(()  {editingFirst = true;}),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              readOnly: true,
-              controller: _num2Controller,
-              decoration: InputDecoration(
-                labelText: "Second number",
-                filled: !editingFirst,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(),
-              ),
-              onTap: () => setState(() { editingFirst = false;}),
-            ),
-
-            const SizedBox(height: 16),
-
             Expanded(
-              child: GridView.builder(
-                itemCount: buttons.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 1,
+              flex: 2,
+              child: Container(
+                alignment: Alignment.bottomRight,
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  display,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 64,
+                    fontWeight: FontWeight.w300,
+                  ),
                 ),
-                itemBuilder: (context, index) {
-                  final button = buttons[index];
-
-                  if ('0123456789.'.contains(button)) {
-                    return buildNumberButton(button);
-                  }
-
-                  if (button == '=') {
-                    return buildEqualsButton(button);
-                  }
-
-                  return buildOperationButton(button);
-                },
               ),
             ),
-
-            
-            Column(
-
-            ),
-
-            const SizedBox(height: 24),
-            Row( 
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    _num1Controller.text = '';
-                    _num2Controller.text = '';
-                    setState(() {editingFirst = true;});
-                  },
-                  child: const Text('Clear'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Text(
-              _result,
-              style: const TextStyle(fontSize: 20),
+            Expanded(
+              flex: 5,
+              child: buildButtons(),
             ),
           ],
         ),
