@@ -16,14 +16,12 @@ class CalculatorApp extends StatelessWidget {
   }
 }
 
-
 class CalculatorPage extends StatefulWidget {
   const CalculatorPage({super.key});
 
   @override
   State<CalculatorPage> createState() => _CalculatorPageState();
 }
-
 
 class _CalculatorPageState extends State<CalculatorPage> {
   String display = '0';
@@ -33,16 +31,35 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
   bool shouldClearDisplay = false;
 
+  String formatResult(double value) {
+    if (value % 1 == 0) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
 
   Widget buildButtons() {
     final buttons = [
-      'AC', '±', '%', '/',
-      '7', '8', '9', 'x',
-      '4', '5', '6', '-',
-      '1', '2', '3', '+',
-      '0', '.', '=',
+      'AC',
+      '±',
+      '%',
+      '/',
+      '7',
+      '8',
+      '9',
+      'x',
+      '4',
+      '5',
+      '6',
+      '-',
+      '1',
+      '2',
+      '3',
+      '+',
+      '0',
+      '.',
+      '=',
     ];
-
 
     return GridView.builder(
       padding: const EdgeInsets.all(12),
@@ -56,13 +73,11 @@ class _CalculatorPageState extends State<CalculatorPage> {
       itemBuilder: (context, index) {
         final label = buttons[index];
 
-
         if (label == '0') return buildWideButton(label);
         return buildButton(label);
       },
     );
   }
-
 
   Widget buildButton(String text) {
     Color bg = Colors.grey.shade800;
@@ -85,24 +100,21 @@ class _CalculatorPageState extends State<CalculatorPage> {
     );
   }
 
-
   Widget buildWideButton(String text) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey.shade800,
-        shape: const StadiumBorder(),
-        padding: const EdgeInsets.symmetric(horizontal:28),
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(40),
       ),
       onPressed: () => onButtonPressed(text),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(text,
-          style: const TextStyle(fontSize: 24, color: Colors.white)
-        ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 24, color: Colors.white),
       ),
     );
   }
-
 
   void onButtonPressed(String value) {
     setState(() {
@@ -136,17 +148,25 @@ class _CalculatorPageState extends State<CalculatorPage> {
           case '-':
             result = firstNumber! - second;
             break;
-          case '*':
+          case 'x':
             result = firstNumber! * second;
             break;
           case '/':
-            result = second == 0 ? 0 :firstNumber! / second;
-            break;
+            if (second == 0) {
+              display = "Cannot divide by zero";
+              firstNumber = null;
+              operation = null;
+              shouldClearDisplay = true;
+              return;
+            } else {
+              result = firstNumber! / second;
+              break;
+            }
           default:
             return;
         }
 
-        display = result.toString();
+        display = formatResult(result);
         firstNumber = null;
         operation = null;
         return;
@@ -160,13 +180,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
         display = display == '0' ? value : display + value;
       }
     });
-
-    
-
-
-    
-
-
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,10 +204,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                 ),
               ),
             ),
-            Expanded(
-              flex: 5,
-              child: buildButtons(),
-            ),
+            Expanded(flex: 5, child: buildButtons()),
           ],
         ),
       ),
