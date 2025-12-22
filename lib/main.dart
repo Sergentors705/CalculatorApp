@@ -25,7 +25,7 @@ class CalculatorPage extends StatefulWidget {
 
 class _CalculatorPageState extends State<CalculatorPage> {
   String display = '0';
-
+  static const double buttonSize = 72;
   double? firstNumber;
   String? operation;
 
@@ -80,9 +80,9 @@ class _CalculatorPageState extends State<CalculatorPage> {
               children: [
                 Expanded(child: buildWideButton('0')),
                 const SizedBox(width: 12),
-                Expanded(child: buildButton('.')),
+                buildButton('.'),
                 const SizedBox(width: 12),
-                Expanded(child: buildButton('=')),
+                buildButton('='),
               ],
             ),
           ),
@@ -101,31 +101,40 @@ class _CalculatorPageState extends State<CalculatorPage> {
       fg = Colors.black;
     }
 
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bg,
-        shape: const CircleBorder(),
-        padding: const EdgeInsets.all(20),
+    return SizedBox(
+      width: buttonSize,
+      height: buttonSize,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg,
+          shape: const CircleBorder(),
+          padding: const EdgeInsets.all(20),
+        ),
+        onPressed: () => onButtonPressed(text),
+        child: Text(text, style: TextStyle(fontSize: 24, color: fg)),
       ),
-      onPressed: () => onButtonPressed(text),
-      child: Text(text, style: TextStyle(fontSize: 24, color: fg)),
     );
   }
 
   Widget buildWideButton(String text) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(40),
-      onTap: () => onButtonPressed(text),
-      child: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade800,
-          borderRadius: BorderRadius.circular(40),
+    return SizedBox(
+      height: buttonSize,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey.shade800,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(buttonSize / 2),
+          ),
+          padding: const EdgeInsets.only(left: 28),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 24, color: Colors.white),
+        onPressed: () => onButtonPressed(text),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 26, color: Colors.white),
+          ),
         ),
       ),
     );
@@ -184,6 +193,16 @@ class _CalculatorPageState extends State<CalculatorPage> {
         display = formatResult(result);
         firstNumber = null;
         operation = null;
+        return;
+      }
+
+      //
+      if (value == '±') {
+        if (display.startsWith('-')) {
+          display.substring(1);
+        } else if (display != '0') {
+          display = '-$display';
+        }
         return;
       }
 
