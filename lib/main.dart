@@ -26,10 +26,11 @@ class CalculatorPage extends StatefulWidget {
 class _CalculatorPageState extends State<CalculatorPage> {
   String display = '0';
   static const double buttonSize = 72;
-  double? firstNumber;
-  String? operation;
+  double? first;
+  double? second;
+  String? operator;
 
-  bool shouldClearDisplay = false;
+  bool isNewInput = true;
 
   String formatResult(double value) {
     if (value % 1 == 0) {
@@ -145,45 +146,47 @@ class _CalculatorPageState extends State<CalculatorPage> {
       // AC
       if (value == 'AC') {
         display = '0';
-        firstNumber = null;
-        operation = null;
+        first = null;
+        second = null;
+        operator = null;
+        isNewInput = true;
         return;
       }
 
       // operation
       if ('/x-+'.contains(value)) {
-        firstNumber = double.parse(display);
-        operation = value;
-        shouldClearDisplay = true;
+        first = double.parse(display);
+        operator = value;
+        isNewInput = true;
         return;
       }
 
       // equal
       if (value == '=') {
-        if (firstNumber == null || operation == null) return;
+        if (first == null || operator == null) return;
 
-        final second = double.parse(display);
+        second = double.parse(display);
         double result;
 
-        switch (operation) {
+        switch (operator) {
           case '+':
-            result = firstNumber! + second;
+            result = first! + second!;
             break;
           case '-':
-            result = firstNumber! - second;
+            result = first! - second!;
             break;
           case 'x':
-            result = firstNumber! * second;
+            result = first! * second!;
             break;
           case '/':
             if (second == 0) {
               display = "Cannot divide by zero";
-              firstNumber = null;
-              operation = null;
-              shouldClearDisplay = true;
+              first = null;
+              operator = null;
+              isNewInput = true;
               return;
             } else {
-              result = firstNumber! / second;
+              result = first! / second!;
               break;
             }
           default:
@@ -191,15 +194,15 @@ class _CalculatorPageState extends State<CalculatorPage> {
         }
 
         display = formatResult(result);
-        firstNumber = null;
-        operation = null;
+        first = result;
+        isNewInput = true;
         return;
       }
 
       //
       if (value == '±') {
         if (display.startsWith('-')) {
-          display.substring(1);
+          display = display.substring(1);
         } else if (display != '0') {
           display = '-$display';
         }
@@ -207,11 +210,15 @@ class _CalculatorPageState extends State<CalculatorPage> {
       }
 
       // digits and dot
-      if (shouldClearDisplay) {
-        display = value;
-        shouldClearDisplay = false;
-      } else {
-        display = display == '0' ? value : display + value;
+      if ('0123456789.'.contains(value)) {
+        if (isNewInput) {
+          display = value == '.' ? '0.' : value;
+          isNewInput = false;
+        } else {
+          if (value == '.' && display.contains('.')) return;
+          display += value;
+        }
+        return;
       }
     });
   }
