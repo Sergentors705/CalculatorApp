@@ -56,26 +56,38 @@ class _CalculatorPageState extends State<CalculatorPage> {
       '2',
       '3',
       '+',
-      '0',
-      '.',
-      '=',
     ];
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: buttons.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1,
-      ),
-      itemBuilder: (context, index) {
-        final label = buttons[index];
-
-        if (label == '0') return buildWideButton(label);
-        return buildButton(label);
-      },
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(12),
+          sliver: SliverGrid(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              return buildButton(buttons[index]);
+            }, childCount: buttons.length),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Row(
+              children: [
+                Expanded(child: buildWideButton('0')),
+                const SizedBox(width: 12),
+                Expanded(child: buildButton('.')),
+                const SizedBox(width: 12),
+                Expanded(child: buildButton('=')),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -101,17 +113,20 @@ class _CalculatorPageState extends State<CalculatorPage> {
   }
 
   Widget buildWideButton(String text) {
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      onPressed: () => onButtonPressed(text),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 24, color: Colors.white),
+    return InkWell(
+      borderRadius: BorderRadius.circular(40),
+      onTap: () => onButtonPressed(text),
+      child: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 24, color: Colors.white),
+        ),
       ),
     );
   }
