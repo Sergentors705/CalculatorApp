@@ -199,13 +199,58 @@ class _CalculatorPageState extends State<CalculatorPage> {
         return;
       }
 
-      //
+      // ±
       if (value == '±') {
         if (display.startsWith('-')) {
           display = display.substring(1);
         } else if (display != '0') {
           display = '-$display';
         }
+        return;
+      }
+
+      // %
+      if (value == '%') {
+        second = double.tryParse(display);
+        if (second == null) return;
+
+        if (first == null || operator == null) {
+          display = formatResult(second! / 100);
+        } else {
+          final percentValue = first! * second! / 100;
+          display = formatResult(percentValue);
+        }
+
+        double result;
+
+        switch (operator) {
+          case '+':
+            result = first! + second! * first! / 100;
+            break;
+          case '-':
+            result = first! - second! * first! / 100;
+            break;
+          case 'x':
+            result = first! / 100 * second!;
+            break;
+          case '/':
+            if (second == 0) {
+              display = "Cannot divide by zero";
+              first = null;
+              operator = null;
+              isNewInput = true;
+              return;
+            } else {
+              result = first! / 100 * second!;
+              break;
+            }
+          default:
+            return;
+        }
+
+        display = formatResult(result);
+        first = result;
+        isNewInput = true;
         return;
       }
 
