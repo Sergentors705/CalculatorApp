@@ -24,16 +24,6 @@ class CalculatorPage extends StatefulWidget {
 }
 
 class _CalculatorPageState extends State<CalculatorPage> {
-  String display = '0';
-  static const double buttonSize = 72;
-  double? first;
-  double? second;
-  String? operator;
-  static const int maxDisplayLength = 9;
-  bool hasError = false;
-
-  bool isNewInput = true;
-
   String formatResult(double value) {
     if (value % 1 == 0) {
       return value.toInt().toString();
@@ -161,14 +151,6 @@ class _CalculatorPageState extends State<CalculatorPage> {
         operator = null;
       }
 
-      // operation
-      if ('/x-+'.contains(value)) {
-        first = double.parse(display);
-        operator = value;
-        isNewInput = true;
-        return;
-      }
-
       // equal
       if (value == '=') {
         if (first == null || operator == null) return;
@@ -196,61 +178,6 @@ class _CalculatorPageState extends State<CalculatorPage> {
               return;
             } else {
               result = first! / second!;
-              break;
-            }
-          default:
-            return;
-        }
-
-        display = formatResult(result);
-        first = result;
-        isNewInput = true;
-        return;
-      }
-
-      // ±
-      if (value == '±') {
-        if (display.startsWith('-')) {
-          display = display.substring(1);
-        } else if (display != '0') {
-          display = '-$display';
-        }
-        return;
-      }
-
-      // %
-      if (value == '%') {
-        second = double.tryParse(display);
-        if (second == null) return;
-
-        if (first == null || operator == null) {
-          display = formatResult(second! / 100);
-        } else {
-          final percentValue = first! * second! / 100;
-          display = formatResult(percentValue);
-        }
-
-        double result;
-
-        switch (operator) {
-          case '+':
-            result = first! + second! * first! / 100;
-            break;
-          case '-':
-            result = first! - second! * first! / 100;
-            break;
-          case 'x':
-            result = first! / 100 * second!;
-            break;
-          case '/':
-            if (second == 0) {
-              display = "Cannot divide by zero";
-              first = null;
-              operator = null;
-              isNewInput = true;
-              return;
-            } else {
-              result = first! / 100 * second!;
               break;
             }
           default:
