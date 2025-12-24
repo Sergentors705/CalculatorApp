@@ -29,6 +29,8 @@ class _CalculatorPageState extends State<CalculatorPage> {
   double? first;
   double? second;
   String? operator;
+  static const int maxDisplayLength = 9;
+  bool hasError = false;
 
   bool isNewInput = true;
 
@@ -146,11 +148,17 @@ class _CalculatorPageState extends State<CalculatorPage> {
       // AC
       if (value == 'AC') {
         display = '0';
+        hasError = false;
         first = null;
         second = null;
         operator = null;
         isNewInput = true;
         return;
+      } else {
+        display = '0';
+        hasError = false;
+        first = null;
+        operator = null;
       }
 
       // operation
@@ -180,7 +188,8 @@ class _CalculatorPageState extends State<CalculatorPage> {
             break;
           case '/':
             if (second == 0) {
-              display = "Cannot divide by zero";
+              display = 'Error';
+              hasError = true;
               first = null;
               operator = null;
               isNewInput = true;
@@ -261,6 +270,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
           isNewInput = false;
         } else {
           if (value == '.' && display.contains('.')) return;
+          if (display.length >= maxDisplayLength) return;
           display += value;
         }
         return;
@@ -280,12 +290,16 @@ class _CalculatorPageState extends State<CalculatorPage> {
               child: Container(
                 alignment: Alignment.bottomRight,
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  display,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 64,
-                    fontWeight: FontWeight.w300,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    display,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 64,
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
                 ),
               ),
