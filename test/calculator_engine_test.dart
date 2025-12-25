@@ -84,5 +84,57 @@ void main() {
 
       expect(engine.display, '11');
     });
+
+    test('percent with operator: 200 + 10 % = gives 220', () {
+      final engine = CalculatorEngine();
+
+      engine.input('2');
+      engine.input('0');
+      engine.input('0');
+      engine.input('+');
+      engine.input('1');
+      engine.input('0');
+      engine.input('%');
+      engine.input('=');
+
+      expect(engine.display, '220');
+    });
+
+    test('5 + = = gives 15', () {
+      final engine = CalculatorEngine();
+
+      engine.input('5');
+      engine.input('+');
+      engine.input('=');
+      engine.input('=');
+
+      expect(engine.display, '15');
+    });
+
+    test('AC clears error state', () {
+      final engine = CalculatorEngine();
+
+      engine.input('5');
+      engine.input('/');
+      engine.input('0');
+      engine.input('=');
+
+      expect(engine.display, 'Error');
+
+      engine.input('AC');
+      expect(engine.display, '0');
+
+      engine.input('8');
+      expect(engine.display, '8');
+    });
+
+    test('percent after equals works', () {
+      final engine = CalculatorEngine();
+
+      engine.input('5');
+      engine.input('0');
+      engine.input('=');
+      engine.input('%');
+    });
   });
 }
