@@ -16,7 +16,7 @@ class CalculatorEngine {
 
   // --- PUBLIC API ---
   void input(String value) {
-    if (hasError) {
+    if (hasError && value != 'AC') {
       _reset();
     }
 
@@ -54,17 +54,17 @@ class CalculatorEngine {
     if (value != '%') return false;
 
     final current = double.tryParse(display);
-      if (current == null) return true;
 
-      if (first == null || operator == null) {
-        display = _format(current / 100);
-      } else {
-        display = _format(first! * current / 100);
-      }
+    if (current == null) return true;
 
-      isNewInput = true;
-      return true;
+    if (first == null || operator == null) {
+      display = _format(current / 100);
+    } else {
+      display = _format(first! * current / 100);
     }
+
+    isNewInput = true;
+    return true;
   }
 
   bool _handleOperator(String value) {
@@ -77,17 +77,77 @@ class CalculatorEngine {
   }
 
   bool _handleEqual(String value) {
-    if (value == '=') {
+    if (value != '=') return false;
+
+    if (first != null && operator != null) {
+      final second = double.parse(display);
+
+      lastSecond = second;
+      lastOperator = operator;
+
+      final double? result = _calculate(first!, second, operator!);
+
+      if (result == null) {
+        display = 'Error';
+        hasError = true;
+        isNewInput = true;
+        return true;
+      }
+
+      display = _format(result);
+      first = result;
+      operator = null;
+      isNewInput = true;
       return true;
     }
+
+    if (first != null && lastSecond != null && lastOperator != null) {
+      final double? result = _calculate(first!, lastSecond!, lastOperator!);
+      if (result == null) {
+        display = 'Error';
+        _reset();
+        isNewInput = true;
+        return true;
+      }
+      display = _format(result);
+      first = result;
+      isNewInput = true;
+      return true;
+    }
+
     return false;
   }
 
   bool _handleDigit(String value) {
-    if ('1234567890.'.contains(value)) {
-      return true;
+    if (!'1234567890.'.contains(value)) return false;
+
+    if (isNewInput) {
+      display = value == '.' ? '0.' : value;
+      isNewInput = false;
+    } else {
+      if (value == '.' && display.contains('.')) return true;
+      if (display.length >= maxDisplayLength) return true;
+      display += value;
     }
-    return false;
+
+    return true;
+  }
+
+  // --- CORE MATH ---
+
+  double? _calculate(double a, double b, String op) {
+    switch (op) {
+      case '+':
+        return a + b;
+      case '-':
+        return a - b;
+      case 'x':
+        return a * b;
+      case '/':
+        return b == 0 ? null : a / b;
+      default:
+        return null;
+    }
   }
 
   String _format(double value) {

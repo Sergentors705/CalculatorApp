@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'calculator_engine.dart';
 
 void main() {
   runApp(const CalculatorApp());
@@ -24,6 +25,10 @@ class CalculatorPage extends StatefulWidget {
 }
 
 class _CalculatorPageState extends State<CalculatorPage> {
+  static const double buttonSize = 72;
+
+  final engine = CalculatorEngine();
+
   String formatResult(double value) {
     if (value % 1 == 0) {
       return value.toInt().toString();
@@ -103,7 +108,11 @@ class _CalculatorPageState extends State<CalculatorPage> {
           shape: const CircleBorder(),
           padding: const EdgeInsets.all(20),
         ),
-        onPressed: () => onButtonPressed(text),
+        onPressed: () {
+          setState(() {
+            engine.input(text);
+          });
+        },
         child: Text(text, style: TextStyle(fontSize: 24, color: fg)),
       ),
     );
@@ -121,7 +130,11 @@ class _CalculatorPageState extends State<CalculatorPage> {
           ),
           padding: const EdgeInsets.only(left: 28),
         ),
-        onPressed: () => onButtonPressed(text),
+        onPressed: () {
+          setState(() {
+            engine.input(text);
+          });
+        },
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
@@ -131,78 +144,6 @@ class _CalculatorPageState extends State<CalculatorPage> {
         ),
       ),
     );
-  }
-
-  void onButtonPressed(String value) {
-    setState(() {
-      // AC
-      if (value == 'AC') {
-        display = '0';
-        hasError = false;
-        first = null;
-        second = null;
-        operator = null;
-        isNewInput = true;
-        return;
-      } else {
-        display = '0';
-        hasError = false;
-        first = null;
-        operator = null;
-      }
-
-      // equal
-      if (value == '=') {
-        if (first == null || operator == null) return;
-
-        second = double.parse(display);
-        double result;
-
-        switch (operator) {
-          case '+':
-            result = first! + second!;
-            break;
-          case '-':
-            result = first! - second!;
-            break;
-          case 'x':
-            result = first! * second!;
-            break;
-          case '/':
-            if (second == 0) {
-              display = 'Error';
-              hasError = true;
-              first = null;
-              operator = null;
-              isNewInput = true;
-              return;
-            } else {
-              result = first! / second!;
-              break;
-            }
-          default:
-            return;
-        }
-
-        display = formatResult(result);
-        first = result;
-        isNewInput = true;
-        return;
-      }
-
-      // digits and dot
-      if ('0123456789.'.contains(value)) {
-        if (isNewInput) {
-          display = value == '.' ? '0.' : value;
-          isNewInput = false;
-        } else {
-          if (value == '.' && display.contains('.')) return;
-          if (display.length >= maxDisplayLength) return;
-          display += value;
-        }
-        return;
-      }
-    });
   }
 
   @override
@@ -221,7 +162,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: Text(
-                    display,
+                    engine.display,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 64,
