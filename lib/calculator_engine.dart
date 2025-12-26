@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+enum Operation { add, subtract, multiply, divide }
+
 class CalculatorEngine {
   String display = '0';
 
   double? first;
-  String? operator;
+  Operation? operation;
 
   double? lastSecond;
-  String? lastOperator;
+  Operation? lastOperator;
 
   bool isNewInput = true;
   bool hasError = false;
@@ -57,7 +59,7 @@ class CalculatorEngine {
 
     if (current == null) return true;
 
-    if (first == null || operator == null) {
+    if (first == null || operation == null) {
       display = _format(current / 100);
     } else {
       display = _format(first! * current / 100);
@@ -70,8 +72,19 @@ class CalculatorEngine {
   bool _handleOperator(String value) {
     if (!'+-x/'.contains(value)) return false;
 
+    switch (value) {
+      case '+':
+        operation = Operation.add;
+      case '-':
+        operation = Operation.subtract;
+      case 'x':
+        operation = Operation.multiply;
+      case '/':
+        operation = Operation.divide;
+    }
+
     first = double.parse(display);
-    operator = value;
+    operation = operation;
     isNewInput = true;
     return true;
   }
@@ -79,13 +92,13 @@ class CalculatorEngine {
   bool _handleEqual(String value) {
     if (value != '=') return false;
 
-    if (first != null && operator != null) {
+    if (first != null && operation != null) {
       final second = double.parse(display);
 
       lastSecond = second;
-      lastOperator = operator;
+      lastOperator = operation;
 
-      final double? result = _calculate(first!, second, operator!);
+      final double? result = _calculate(first!, second, operation!);
 
       if (result == null) {
         display = 'Error';
@@ -96,7 +109,7 @@ class CalculatorEngine {
 
       display = _format(result);
       first = result;
-      operator = null;
+      operation = null;
       isNewInput = true;
       return true;
     }
@@ -135,18 +148,16 @@ class CalculatorEngine {
 
   // --- CORE MATH ---
 
-  double? _calculate(double a, double b, String op) {
-    switch (op) {
-      case '+':
+  double? _calculate(double a, double b, Operation operation) {
+    switch (operation) {
+      case Operation.add:
         return a + b;
-      case '-':
+      case Operation.subtract:
         return a - b;
-      case 'x':
+      case Operation.multiply:
         return a * b;
-      case '/':
+      case Operation.divide:
         return b == 0 ? null : a / b;
-      default:
-        return null;
     }
   }
 
@@ -160,7 +171,7 @@ class CalculatorEngine {
   void _reset() {
     display = '0';
     first = null;
-    operator = null;
+    operation = null;
     lastOperator = null;
     lastSecond = null;
     isNewInput = true;
