@@ -85,21 +85,22 @@ class CalculatorEngine {
   // --- HANDLERS ---
 
   CalculatorState? _handleClear(CalculatorState state, String value) {
+    if (value != 'AC') return null;
+
     if (value == 'AC') {
       return CalculatorState.initial();
     }
-    return null;
   }
 
   CalculatorState? _handleSign(CalculatorState state, String value) {
     if (value != '±') return null;
-
+    String newDisplay = state.display;
     if (state.display.startsWith('-')) {
-      state = state.copyWith(display: state.display.substring(1));
+      newDisplay = state.display.substring(1);
     } else if (state.display != '0') {
-      state = state.copyWith(display: '-${state.display}');
+      newDisplay = '-${state.display}';
     }
-    return state;
+    return state.copyWith(display: newDisplay);
   }
 
   CalculatorState? _handlePercent(CalculatorState state, String value) {
@@ -147,22 +148,25 @@ class CalculatorEngine {
     if (state.first != null && state.operation != null) {
       final second = double.parse(state.display);
 
-      state = state.copyWith(lastSecond: second);
-      state = state.copyWith(lastOperator: state.operation);
+      state = state.copyWith(lastSecond: second, lastOperator: state.operation);
 
       final double? result = _calculate(state.first!, second, state.operation!);
 
       if (result == null) {
-        state = state.copyWith(display: 'Error');
-        state = state.copyWith(hasError: true);
-        state = state.copyWith(isNewInput: true);
+        state = state.copyWith(
+          display: 'Error',
+          hasError: true,
+          isNewInput: true,
+        );
         return state;
       }
 
-      state = state.copyWith(display: _format(result));
-      state = state.copyWith(first: result);
+      state = state.copyWith(
+        display: _format(result),
+        first: result,
+        isNewInput: true,
+      );
       state = state.clearOperation();
-      state = state.copyWith(isNewInput: true);
       return state;
     }
 
@@ -175,14 +179,15 @@ class CalculatorEngine {
         state.lastOperator!,
       );
       if (result == null) {
-        state = state.copyWith(display: 'Error');
+        state = state.copyWith(display: 'Error', isNewInput: true);
         state = CalculatorState.initial();
-        state = state.copyWith(isNewInput: true);
         return state;
       }
-      state = state.copyWith(display: _format(result));
-      state = state.copyWith(first: result);
-      state = state.copyWith(isNewInput: true);
+      state = state.copyWith(
+        display: _format(result),
+        first: result,
+        isNewInput: true,
+      );
       return state;
     }
 
