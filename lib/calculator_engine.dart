@@ -1,155 +1,215 @@
-import 'package:flutter/material.dart';
-
 enum Operation { add, subtract, multiply, divide }
 
+class CalculatorState {
+  final String display;
+
+  final double? first;
+  final Operation? operation;
+
+  final double? lastSecond;
+  final Operation? lastOperator;
+
+  final bool isNewInput;
+  final bool hasError;
+
+  CalculatorState({
+    required this.display,
+    this.first,
+    this.operation,
+    this.lastSecond,
+    this.lastOperator,
+    required this.hasError,
+    required this.isNewInput,
+  });
+
+  CalculatorState copyWith({
+    String? display,
+    double? first,
+    Operation? operation,
+    double? lastSecond,
+    Operation? lastOperator,
+    bool? isNewInput,
+    bool? hasError,
+  }) {
+    return CalculatorState(
+      display: display ?? this.display,
+      first: first ?? this.first,
+      operation: operation ?? this.operation,
+      lastSecond: lastSecond ?? this.lastSecond,
+      lastOperator: lastOperator ?? this.lastOperator,
+      hasError: hasError ?? this.hasError,
+      isNewInput: isNewInput ?? this.isNewInput,
+    );
+  }
+
+  CalculatorState clearOperation() {
+    return CalculatorState(
+      display: display,
+      first: first,
+      operation: null,
+      lastSecond: lastSecond,
+      lastOperator: lastOperator,
+      hasError: hasError,
+      isNewInput: isNewInput,
+    );
+  }
+
+  factory CalculatorState.initial() =>
+      CalculatorState(display: '0', hasError: false, isNewInput: true);
+}
+
 class CalculatorEngine {
-  String display = '0';
-
-  double? first;
-  Operation? operation;
-
-  double? lastSecond;
-  Operation? lastOperator;
-
-  bool isNewInput = true;
-  bool hasError = false;
-
   static const int maxDisplayLength = 9;
 
   // --- PUBLIC API ---
-  void input(String value) {
-    if (hasError && value != 'AC') {
-      _reset();
+  CalculatorState input(CalculatorState state, String value) {
+    if (state.hasError && value != 'AC') {
+      state = CalculatorState.initial();
     }
 
-    if (_handleClear(value)) return;
-    if (_handleSign(value)) return;
-    if (_handlePercent(value)) return;
-    if (_handleOperator(value)) return;
-    if (_handleEqual(value)) return;
-    if (_handleDigit(value)) return;
+    final s1 = _handleClear(state, value);
+    if (s1 != null) return s1;
+    final s2 = _handleSign(state, value);
+    if (s2 != null) return s2;
+    final s3 = _handlePercent(state, value);
+    if (s3 != null) return s3;
+    final s4 = _handleOperator(state, value);
+    if (s4 != null) return s4;
+    final s5 = _handleEqual(state, value);
+    if (s5 != null) return s5;
+    final s6 = _handleDigit(state, value);
+    if (s6 != null) return s6;
+    return state;
   }
 
   // --- HANDLERS ---
 
-  bool _handleClear(String value) {
+  CalculatorState? _handleClear(CalculatorState state, String value) {
     if (value == 'AC') {
-      _reset();
-      return true;
+      return CalculatorState.initial();
     }
-    return false;
+    return null;
   }
 
-  bool _handleSign(String value) {
-    if (value == '±') {
-      if (display.startsWith('-')) {
-        display = display.substring(1);
-      } else if (display != '0') {
-        display = '-$display';
-      }
-      return true;
+  CalculatorState? _handleSign(CalculatorState state, String value) {
+    if (value != '±') return null;
+
+    if (state.display.startsWith('-')) {
+      state = state.copyWith(display: state.display.substring(1));
+    } else if (state.display != '0') {
+      state = state.copyWith(display: '-${state.display}');
     }
-    return false;
+    return state;
   }
 
-  bool _handlePercent(String value) {
-    if (value != '%') return false;
+  CalculatorState? _handlePercent(CalculatorState state, String value) {
+    if (value != '%') return null;
 
-    final current = double.tryParse(display);
+    final current = double.tryParse(state.display);
 
-    if (current == null) return true;
+    if (current == null) return state;
 
-    if (first == null || operation == null) {
-      display = _format(current / 100);
+    if (state.first == null || state.operation == null) {
+      state = state.copyWith(display: _format(current / 100));
     } else {
-      display = _format(first! * current / 100);
+      state = state.copyWith(display: _format(state.first! * current / 100));
     }
 
-    isNewInput = true;
-    return true;
+    state = state.copyWith(isNewInput: true);
+    return state;
   }
 
-  bool _handleOperator(String value) {
-    if (!'+-x/'.contains(value)) return false;
+  CalculatorState? _handleOperator(CalculatorState state, String value) {
+    if (!'+-x/'.contains(value)) return null;
 
+    state = state.copyWith(first: double.parse(state.display));
     switch (value) {
       case '+':
-        operation = Operation.add;
+        state = state.copyWith(operation: Operation.add);
+        break;
       case '-':
-        operation = Operation.subtract;
+        state = state.copyWith(operation: Operation.subtract);
+        break;
       case 'x':
-        operation = Operation.multiply;
+        state = state.copyWith(operation: Operation.multiply);
+        break;
       case '/':
-        operation = Operation.divide;
+        state = state.copyWith(operation: Operation.divide);
+        break;
     }
-
-    first = double.parse(display);
-    operation = operation;
-    isNewInput = true;
-    return true;
+    state = state.copyWith(isNewInput: true);
+    return state;
   }
 
-  bool _handleEqual(String value) {
-    if (value != '=') return false;
+  CalculatorState? _handleEqual(CalculatorState state, String value) {
+    if (value != '=') return null;
 
-    if (first != null && operation != null) {
-      final second = double.parse(display);
+    if (state.first != null && state.operation != null) {
+      final second = double.parse(state.display);
 
-      lastSecond = second;
-      lastOperator = operation;
+      state = state.copyWith(lastSecond: second);
+      state = state.copyWith(lastOperator: state.operation);
 
-      final double? result = _calculate(first!, second, operation!);
+      final double? result = _calculate(state.first!, second, state.operation!);
 
       if (result == null) {
-        display = 'Error';
-        hasError = true;
-        isNewInput = true;
-        return true;
+        state = state.copyWith(display: 'Error');
+        state = state.copyWith(hasError: true);
+        state = state.copyWith(isNewInput: true);
+        return state;
       }
 
-      display = _format(result);
-      first = result;
-      operation = null;
-      isNewInput = true;
-      return true;
+      state = state.copyWith(display: _format(result));
+      state = state.copyWith(first: result);
+      state = state.clearOperation();
+      state = state.copyWith(isNewInput: true);
+      return state;
     }
 
-    if (first != null && lastSecond != null && lastOperator != null) {
-      final double? result = _calculate(first!, lastSecond!, lastOperator!);
+    if (state.first != null &&
+        state.lastSecond != null &&
+        state.lastOperator != null) {
+      final double? result = _calculate(
+        state.first!,
+        state.lastSecond!,
+        state.lastOperator!,
+      );
       if (result == null) {
-        display = 'Error';
-        _reset();
-        isNewInput = true;
-        return true;
+        state = state.copyWith(display: 'Error');
+        state = CalculatorState.initial();
+        state = state.copyWith(isNewInput: true);
+        return state;
       }
-      display = _format(result);
-      first = result;
-      isNewInput = true;
-      return true;
+      state = state.copyWith(display: _format(result));
+      state = state.copyWith(first: result);
+      state = state.copyWith(isNewInput: true);
+      return state;
     }
 
-    return false;
+    return state;
   }
 
-  bool _handleDigit(String value) {
-    if (!'1234567890.'.contains(value)) return false;
+  CalculatorState? _handleDigit(CalculatorState state, String value) {
+    if (!'1234567890.'.contains(value)) return null;
 
-    if (isNewInput) {
-      display = value == '.' ? '0.' : value;
-      isNewInput = false;
+    if (state.isNewInput) {
+      state = state.copyWith(
+        display: value == '.' ? '0.' : value,
+        isNewInput: false,
+      );
     } else {
-      if (value == '.' && display.contains('.')) return true;
-      if (display.length >= maxDisplayLength) return true;
-      display += value;
+      if (value == '.' && state.display.contains('.')) return state;
+      if (state.display.length >= maxDisplayLength) return state;
+      state = state.copyWith(display: state.display + value);
     }
 
-    return true;
+    return state;
   }
 
   // --- CORE MATH ---
 
-  double? _calculate(double a, double b, Operation operation) {
-    switch (operation) {
+  double? _calculate(double a, double b, Operation op) {
+    switch (op) {
       case Operation.add:
         return a + b;
       case Operation.subtract:
@@ -166,15 +226,5 @@ class CalculatorEngine {
       return value.toInt().toString();
     }
     return value.toString();
-  }
-
-  void _reset() {
-    display = '0';
-    first = null;
-    operation = null;
-    lastOperator = null;
-    lastSecond = null;
-    isNewInput = true;
-    hasError = false;
   }
 }

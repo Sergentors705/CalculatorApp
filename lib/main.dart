@@ -26,7 +26,7 @@ class CalculatorPage extends StatefulWidget {
 
 class _CalculatorPageState extends State<CalculatorPage> {
   static const double buttonSize = 72;
-
+  CalculatorState state = CalculatorState.initial();
   final engine = CalculatorEngine();
 
   String formatResult(double value) {
@@ -110,7 +110,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
         ),
         onPressed: () {
           setState(() {
-            engine.input(text);
+            engine.input(state, text);
           });
         },
         child: Text(text, style: TextStyle(fontSize: 24, color: fg)),
@@ -132,7 +132,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
         ),
         onPressed: () {
           setState(() {
-            engine.input(text);
+            engine.input(state, text);
           });
         },
         child: Align(
@@ -162,7 +162,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: Text(
-                    engine.display,
+                    state.display,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 64,
