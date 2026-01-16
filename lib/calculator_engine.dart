@@ -61,6 +61,21 @@ class CalculatorState {
 class CalculatorEngine {
   static const int maxDisplayLength = 9;
 
+  Operation? _parseOperation(String value) {
+    switch (value) {
+      case '+':
+        return Operation.add;
+      case '-':
+        return Operation.subtract;
+      case 'x':
+        return Operation.multiply;
+      case '/':
+        return Operation.divide;
+      default:
+        return null;
+    }
+  }
+
   // --- PUBLIC API ---
   CalculatorState input(CalculatorState state, String value) {
     if (state.hasError && value != 'AC') {
@@ -86,10 +101,7 @@ class CalculatorEngine {
 
   CalculatorState? _handleClear(CalculatorState state, String value) {
     if (value != 'AC') return null;
-
-    if (value == 'AC') {
-      return CalculatorState.initial();
-    }
+    return CalculatorState.initial();
   }
 
   CalculatorState? _handleSign(CalculatorState state, String value) {
@@ -121,25 +133,15 @@ class CalculatorEngine {
   }
 
   CalculatorState? _handleOperator(CalculatorState state, String value) {
-    if (!'+-x/'.contains(value)) return null;
+    final op = _parseOperation(value);
+    if (op == null) return null;
 
-    state = state.copyWith(first: double.parse(state.display));
-    switch (value) {
-      case '+':
-        state = state.copyWith(operation: Operation.add);
-        break;
-      case '-':
-        state = state.copyWith(operation: Operation.subtract);
-        break;
-      case 'x':
-        state = state.copyWith(operation: Operation.multiply);
-        break;
-      case '/':
-        state = state.copyWith(operation: Operation.divide);
-        break;
-    }
-    state = state.copyWith(isNewInput: true);
-    return state;
+    final first = double.parse(state.display);
+    return state = state.copyWith(
+      first: first,
+      operation: op,
+      isNewInput: true,
+    );
   }
 
   CalculatorState? _handleEqual(CalculatorState state, String value) {
